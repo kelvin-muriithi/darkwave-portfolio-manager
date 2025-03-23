@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Pencil, Trash2, FolderOpen, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TabContent, TabsList, Tabs, TabTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
@@ -314,25 +314,25 @@ const Admin = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="border-b border-white/10 mb-8">
             <TabsList className="bg-transparent">
-              <TabTrigger
+              <TabsTrigger
                 value="work"
                 className={`tab-button ${activeTab === 'work' ? 'active' : ''}`}
               >
                 <FolderOpen size={16} className="mr-2" />
                 Work Projects
-              </TabTrigger>
-              <TabTrigger
+              </TabsTrigger>
+              <TabsTrigger
                 value="blog"
                 className={`tab-button ${activeTab === 'blog' ? 'active' : ''}`}
               >
                 <FileText size={16} className="mr-2" />
                 Blog Posts
-              </TabTrigger>
+              </TabsTrigger>
             </TabsList>
           </div>
           
           {/* Work Projects Tab */}
-          <TabContent value="work" className="space-y-6">
+          <TabsContent value="work" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Work Projects</h2>
               <Button onClick={handleNewProject}>
@@ -398,10 +398,10 @@ const Admin = () => {
                 </Button>
               </div>
             )}
-          </TabContent>
+          </TabsContent>
           
           {/* Blog Posts Tab */}
-          <TabContent value="blog" className="space-y-6">
+          <TabsContent value="blog" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Blog Posts</h2>
               <Button onClick={handleNewBlogPost}>
@@ -467,7 +467,7 @@ const Admin = () => {
                 </Button>
               </div>
             )}
-          </TabContent>
+          </TabsContent>
         </Tabs>
       </main>
       
