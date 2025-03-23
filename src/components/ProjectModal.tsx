@@ -15,7 +15,7 @@ const ProjectModal = ({ project, isOpen, onOpenChange }: ProjectModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl bg-black/95 border border-white/10 p-0 max-h-[90vh] overflow-auto">
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] bg-black/95 border border-white/10 p-0 overflow-auto">
         <div className="sticky top-0 z-10 flex justify-between items-center px-6 py-4 bg-black/90 backdrop-blur-sm border-b border-white/10">
           <DialogTitle className="text-xl font-bold">{project.title}</DialogTitle>
           <button 
