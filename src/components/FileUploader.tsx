@@ -1,10 +1,11 @@
 
 import React, { useState, useCallback } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadFile, uploadMultipleFiles } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 interface FileUploaderProps {
   onFileUpload: (urls: string[]) => void;
@@ -22,6 +23,7 @@ const FileUploader = ({
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>(existingUrls);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -95,14 +97,30 @@ const FileUploader = ({
     if (files.length === 0) return;
     
     setIsUploading(true);
+    setUploadProgress(0);
     
     try {
-      let uploadedUrls;
+      let uploadedUrls: string[] = [];
       
       if (multiple) {
-        uploadedUrls = await uploadMultipleFiles(files);
+        // Show progress during upload for multiple files
+        const totalFiles = files.length;
+        let completedFiles = 0;
+        
+        const uploadPromises = files.map(file => 
+          uploadFile(file).then(url => {
+            completedFiles++;
+            setUploadProgress(Math.round((completedFiles / totalFiles) * 100));
+            return url;
+          })
+        );
+        
+        const results = await Promise.all(uploadPromises);
+        uploadedUrls = results.filter(url => url !== null) as string[];
       } else {
+        setUploadProgress(50); // Set to 50% when starting single file upload
         const url = await uploadFile(files[0]);
+        setUploadProgress(100);
         uploadedUrls = url ? [url] : [];
       }
       
@@ -111,26 +129,27 @@ const FileUploader = ({
         const allUrls = [...existingUrls, ...uploadedUrls];
         onFileUpload(allUrls);
         toast({
-          title: 'Files uploaded successfully',
-          description: `${uploadedUrls.length} file(s) uploaded to Cloudinary.`,
+          title: 'Files uploaded successfully to Cloudinary',
+          description: `${uploadedUrls.length} file(s) uploaded.`,
         });
       } else {
         toast({
           title: 'Upload failed',
-          description: 'Failed to upload one or more files.',
+          description: 'Failed to upload one or more files to Cloudinary.',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('Error uploading files to Cloudinary:', error);
       toast({
-        title: 'Upload error',
-        description: 'An error occurred while uploading files.',
+        title: 'Cloudinary upload error',
+        description: 'An error occurred while uploading files to Cloudinary.',
         variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
       setFiles([]);
+      setUploadProgress(0);
     }
   };
 
@@ -139,7 +158,7 @@ const FileUploader = ({
       {/* File drop area */}
       <div
         className={cn(
-          "file-drop-area flex flex-col items-center justify-center",
+          "file-drop-area flex flex-col items-center justify-center border-2 border-dashed border-white/20 rounded-lg p-6",
           dragActive && "border-primary bg-primary/5"
         )}
         onDragEnter={handleDrag}
@@ -154,6 +173,7 @@ const FileUploader = ({
           onChange={handleChange}
           className="hidden"
           accept="image/*,video/*,application/pdf"
+          disabled={isUploading}
         />
         
         <Upload className="text-muted-foreground mb-2" size={28} />
@@ -163,7 +183,10 @@ const FileUploader = ({
         </p>
         <label
           htmlFor="file-upload"
-          className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md transition-colors"
+          className={cn(
+            "cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md transition-colors",
+            isUploading && "opacity-50 cursor-not-allowed"
+          )}
         >
           Browse Files
         </label>
@@ -171,6 +194,17 @@ const FileUploader = ({
           Supported formats: Images, Videos, PDFs
         </p>
       </div>
+      
+      {/* Upload progress */}
+      {isUploading && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Uploading to Cloudinary...</span>
+            <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-2" />
+        </div>
+      )}
       
       {/* File previews */}
       {previews.length > 0 && (
@@ -185,7 +219,7 @@ const FileUploader = ({
               const isPdf = fileExtension === 'pdf';
               
               return (
-                <div key={index} className="image-preview">
+                <div key={index} className="relative group">
                   {isPdf ? (
                     <div className="bg-secondary/40 h-24 flex items-center justify-center rounded-lg">
                       <span className="text-xs text-center">PDF Document</span>
@@ -199,8 +233,9 @@ const FileUploader = ({
                   )}
                   <button
                     onClick={isExistingFile ? () => removeExistingFile(index) : () => removeFile(index - existingUrls.length)}
-                    className="remove-button"
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                     aria-label="Remove file"
+                    disabled={isUploading}
                   >
                     <X size={16} />
                   </button>
@@ -218,7 +253,14 @@ const FileUploader = ({
           disabled={isUploading}
           className="w-full"
         >
-          {isUploading ? 'Uploading...' : `Upload ${files.length} file${files.length > 1 ? 's' : ''}`}
+          {isUploading ? (
+            <span className="flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading to Cloudinary...
+            </span>
+          ) : (
+            `Upload ${files.length} file${files.length > 1 ? 's' : ''} to Cloudinary`
+          )}
         </Button>
       )}
     </div>
