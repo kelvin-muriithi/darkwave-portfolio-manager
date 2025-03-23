@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowDown, ArrowRight, Github, Linkedin, Mail } from 'lucide-react';
+import { ArrowDown, ArrowRight, Github, Linkedin, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const HeroSection = () => {
@@ -53,9 +53,9 @@ const HeroSection = () => {
             <div className="relative">
               <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-white/10 animate-pulse-neon">
                 <img 
-                  src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
+                  src="/lovable-uploads/5d0dcc6a-279a-472e-b818-70db2accf097.png" 
+                  alt="Kelvin Muriithi" 
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
               <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/30"></div>
@@ -67,13 +67,13 @@ const HeroSection = () => {
             <div className="space-y-6 max-w-2xl">
               <p className="text-neon-blue font-mono text-sm reveal">Hello, I'm</p>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-display leading-tight reveal">
-                <span className="block">Jane Anderson</span>
-                <span className="block text-neon-blue animate-glow">Creative Developer</span>
+                <span className="block">Kelvin Muriithi</span>
+                <span className="block text-neon-blue animate-glow">Geospatial Engineer</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-xl reveal">
-                I craft digital experiences that combine elegant design with cutting-edge technology. 
-                Specializing in web development, UX design, and creative coding.
+                I specialize in spatial data science, combining geospatial technologies with 
+                data science tools to solve complex environmental and engineering challenges.
               </p>
               
               <div className="flex flex-wrap gap-4 reveal">
@@ -90,14 +90,14 @@ const HeroSection = () => {
               </div>
               
               <div className="flex gap-6 pt-4 reveal">
-                <a href="#" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
-                  <Github size={20} />
+                <a href="mailto:kelvinmuriiithi@gmail.com" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
+                  <Mail size={20} />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
+                <a href="https://www.linkedin.com/in/kelvin-muriithi-0662b0280/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
                   <Linkedin size={20} />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
-                  <Mail size={20} />
+                <a href="tel:+254741581776" className="text-muted-foreground hover:text-neon-blue transition-colors duration-300">
+                  <Phone size={20} />
                 </a>
               </div>
             </div>
