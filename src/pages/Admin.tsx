@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -12,16 +13,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { 
   getProjects, 
-  getBlogPosts, 
   createProject, 
   updateProject,
   deleteProject,
+} from '@/services/projectService';
+
+import {
+  getBlogPosts,
   createBlogPost,
   updateBlogPost,
   deleteBlogPost,
+} from '@/services/blogService';
+
+import {
   isAuthenticated,
   logout
-} from '@/services/api';
+} from '@/services/authService';
+
 import { Project, BlogPost } from '@/models/types';
 import FileUploader from '@/components/FileUploader';
 
@@ -671,4 +679,3 @@ const Admin = () => {
 };
 
 export default Admin;
-

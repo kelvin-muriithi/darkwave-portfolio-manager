@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { uploadFile, uploadMultipleFiles } from '@/services/api';
+import { uploadFile, uploadMultipleFiles } from '@/services/uploadService';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
