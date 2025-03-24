@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getBlogPosts } from '@/services/api';
+import { getBlogPosts } from '@/services/blogService';
 import { BlogPost } from '@/models/types';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';

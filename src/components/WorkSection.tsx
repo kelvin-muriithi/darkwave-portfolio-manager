@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProjects } from '@/services/api';
+import { getProjects } from '@/services/projectService';
 import { Project } from '@/models/types';
 import { ExternalLink, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';

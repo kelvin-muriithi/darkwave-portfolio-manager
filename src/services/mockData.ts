@@ -1,8 +1,7 @@
-
 import { Project, BlogPost } from "@/models/types";
 
 // Mock projects data
-export let mockProjects: Project[] = [
+export const mockProjects: Project[] = [
   {
     id: '1',
     title: 'E-Commerce Web App',
@@ -42,7 +41,7 @@ export let mockProjects: Project[] = [
 ];
 
 // Mock blog posts data
-export let mockBlogPosts: BlogPost[] = [
+export const mockBlogPosts: BlogPost[] = [
   {
     id: '1',
     title: 'The Future of Web Development',
@@ -71,3 +70,18 @@ export let mockBlogPosts: BlogPost[] = [
     tags: ['Accessibility', 'Design', 'UX', 'HTML']
   }
 ];
+
+// Helper function to update mock projects data
+export const updateMockProjects = (updatedProjects: Project[]): void => {
+  // Clear the array while keeping the reference
+  mockProjects.length = 0;
+  mockProjects.push(...updatedProjects);
+};
+
+// Helper function to update mock blog posts data
+export const updateMockBlogPosts = (updatedBlogPosts: BlogPost[]): void => {
+  // Clear the array while keeping the reference
+  mockBlogPosts.length = 0;
+  mockBlogPosts.push(...updatedBlogPosts);
+};
+

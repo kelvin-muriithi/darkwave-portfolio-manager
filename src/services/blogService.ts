@@ -1,6 +1,6 @@
 
 import { BlogPost } from "@/models/types";
-import { mockBlogPosts } from "./mockData";
+import { mockBlogPosts, updateMockBlogPosts } from "./mockData";
 
 // Blog Posts API
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
@@ -59,10 +59,13 @@ export const deleteBlogPost = async (id: string): Promise<boolean> => {
   try {
     // Find post index
     const initialLength = mockBlogPosts.length;
-    mockBlogPosts = mockBlogPosts.filter(post => post.id !== id);
+    const updatedBlogPosts = mockBlogPosts.filter(post => post.id !== id);
+    
+    // Update the mock data using the helper function
+    updateMockBlogPosts(updatedBlogPosts);
     
     // Return true if a post was removed
-    return mockBlogPosts.length < initialLength;
+    return updatedBlogPosts.length < initialLength;
   } catch (error) {
     console.error('Error deleting blog post:', error);
     return false;

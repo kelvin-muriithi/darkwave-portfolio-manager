@@ -1,6 +1,6 @@
 
 import { Project } from "@/models/types";
-import { mockProjects } from "./mockData";
+import { mockProjects, updateMockProjects } from "./mockData";
 
 // Projects API
 export const getProjects = async (): Promise<Project[]> => {
@@ -59,10 +59,13 @@ export const deleteProject = async (id: string): Promise<boolean> => {
   try {
     // Find project index
     const initialLength = mockProjects.length;
-    mockProjects = mockProjects.filter(project => project.id !== id);
+    const updatedProjects = mockProjects.filter(project => project.id !== id);
+    
+    // Update the mock data using the helper function
+    updateMockProjects(updatedProjects);
     
     // Return true if a project was removed
-    return mockProjects.length < initialLength;
+    return updatedProjects.length < initialLength;
   } catch (error) {
     console.error('Error deleting project:', error);
     return false;
