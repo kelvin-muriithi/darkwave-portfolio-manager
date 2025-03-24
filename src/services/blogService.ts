@@ -1,12 +1,17 @@
 
 import { BlogPost } from "@/models/types";
-import { mockBlogPosts, updateMockBlogPosts } from "./mockData";
+import { supabase } from "./supabaseClient";
 
 // Blog Posts API
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
   try {
-    // For now using mock data until backend is connected
-    return getMockBlogPosts();
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .order('date', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return [];
@@ -15,8 +20,14 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
 
 export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
   try {
-    // For now using mock data until backend is connected
-    return getMockBlogPostById(id);
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;
@@ -25,16 +36,19 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
 
 export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPost | null> => {
   try {
-    // Create a new blog post with a unique ID
-    const newPost: BlogPost = {
+    const newPost = {
       ...post,
       id: Date.now().toString()
     };
     
-    // Add to mock data
-    const updatedPosts = [...mockBlogPosts, newPost];
-    updateMockBlogPosts(updatedPosts);
-    return newPost;
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .insert(newPost)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error creating blog post:', error);
     return null;
@@ -43,15 +57,15 @@ export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPo
 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    // Find post index
-    const index = mockBlogPosts.findIndex(p => p.id === id);
-    if (index === -1) return null;
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .update(post)
+      .eq('id', id)
+      .select()
+      .single();
     
-    // Update post
-    const updatedPosts = [...mockBlogPosts];
-    updatedPosts[index] = { ...updatedPosts[index], ...post };
-    updateMockBlogPosts(updatedPosts);
-    return updatedPosts[index];
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error updating blog post:', error);
     return null;
@@ -60,27 +74,19 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
 
 export const deleteBlogPost = async (id: string): Promise<boolean> => {
   try {
-    // Find post index
-    const initialLength = mockBlogPosts.length;
-    const updatedBlogPosts = mockBlogPosts.filter(post => post.id !== id);
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', id);
     
-    // Update the mock data using the helper function
-    updateMockBlogPosts(updatedBlogPosts);
-    
-    // Return true if a post was removed
-    return updatedBlogPosts.length < initialLength;
+    if (error) throw error;
+    return true;
   } catch (error) {
     console.error('Error deleting blog post:', error);
     return false;
   }
 };
 
-// Mock API implementations
-export const getMockBlogPosts = (): Promise<BlogPost[]> => {
-  return Promise.resolve([...mockBlogPosts]);
-};
-
-export const getMockBlogPostById = (id: string): Promise<BlogPost | null> => {
-  const post = mockBlogPosts.find(p => p.id === id);
-  return Promise.resolve(post ? {...post} : null);
-};
+// For backward compatibility (these should no longer be used)
+export const getMockBlogPosts = getBlogPosts;
+export const getMockBlogPostById = getBlogPostById;

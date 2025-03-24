@@ -1,12 +1,17 @@
 
 import { Project } from "@/models/types";
-import { mockProjects, updateMockProjects } from "./mockData";
+import { supabase } from "./supabaseClient";
 
 // Projects API
 export const getProjects = async (): Promise<Project[]> => {
   try {
-    // For now using mock data until backend is connected
-    return getMockProjects();
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('date', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching projects:', error);
     return [];
@@ -15,8 +20,14 @@ export const getProjects = async (): Promise<Project[]> => {
 
 export const getProjectById = async (id: string): Promise<Project | null> => {
   try {
-    // For now using mock data until backend is connected
-    return getMockProjectById(id);
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error fetching project:', error);
     return null;
@@ -25,16 +36,19 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
 
 export const createProject = async (project: Omit<Project, 'id'>): Promise<Project | null> => {
   try {
-    // Create a new project with a unique ID
-    const newProject: Project = {
+    const newProject = {
       ...project,
       id: Date.now().toString()
     };
     
-    // Add to mock data
-    const updatedProjects = [...mockProjects, newProject];
-    updateMockProjects(updatedProjects);
-    return newProject;
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(newProject)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error creating project:', error);
     return null;
@@ -43,15 +57,15 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
 
 export const updateProject = async (id: string, project: Partial<Project>): Promise<Project | null> => {
   try {
-    // Find project index
-    const index = mockProjects.findIndex(p => p.id === id);
-    if (index === -1) return null;
+    const { data, error } = await supabase
+      .from('projects')
+      .update(project)
+      .eq('id', id)
+      .select()
+      .single();
     
-    // Update project
-    const updatedProjects = [...mockProjects];
-    updatedProjects[index] = { ...updatedProjects[index], ...project };
-    updateMockProjects(updatedProjects);
-    return updatedProjects[index];
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error updating project:', error);
     return null;
@@ -60,27 +74,19 @@ export const updateProject = async (id: string, project: Partial<Project>): Prom
 
 export const deleteProject = async (id: string): Promise<boolean> => {
   try {
-    // Find project index
-    const initialLength = mockProjects.length;
-    const updatedProjects = mockProjects.filter(project => project.id !== id);
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
     
-    // Update the mock data using the helper function
-    updateMockProjects(updatedProjects);
-    
-    // Return true if a project was removed
-    return updatedProjects.length < initialLength;
+    if (error) throw error;
+    return true;
   } catch (error) {
     console.error('Error deleting project:', error);
     return false;
   }
 };
 
-// Mock API implementations
-export const getMockProjects = (): Promise<Project[]> => {
-  return Promise.resolve([...mockProjects]);
-};
-
-export const getMockProjectById = (id: string): Promise<Project | null> => {
-  const project = mockProjects.find(p => p.id === id);
-  return Promise.resolve(project ? {...project} : null);
-};
+// For backward compatibility (these should no longer be used)
+export const getMockProjects = getProjects;
+export const getMockProjectById = getProjectById;
