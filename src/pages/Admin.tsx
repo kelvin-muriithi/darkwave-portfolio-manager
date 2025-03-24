@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, FolderOpen, FileText, LogOut } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, FolderOpen, FileText, MessageSquare, LogOut, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -11,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import { 
   getProjects, 
   createProject, 
@@ -26,11 +26,17 @@ import {
 } from '@/services/blogService';
 
 import {
+  getMessages,
+  markMessageAsRead,
+  deleteMessage
+} from '@/services/messageService';
+
+import {
   isAuthenticated,
   logout
 } from '@/services/authService';
 
-import { Project, BlogPost } from '@/models/types';
+import { Project, BlogPost, ContactMessage } from '@/models/types';
 import FileUploader from '@/components/FileUploader';
 
 const Admin = () => {
@@ -39,10 +45,11 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("work");
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Project | BlogPost | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Project | BlogPost | ContactMessage | null>(null);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
-  const [deleteItemType, setDeleteItemType] = useState<'project' | 'post' | null>(null);
+  const [deleteItemType, setDeleteItemType] = useState<'project' | 'post' | 'message' | null>(null);
   
   // Project form state
   const [projectTitle, setProjectTitle] = useState('');
@@ -88,6 +95,15 @@ const Admin = () => {
   } = useQuery({
     queryKey: ['blogPosts'],
     queryFn: getBlogPosts
+  });
+
+  const {
+    data: messages,
+    isLoading: isMessagesLoading,
+    isError: isMessagesError
+  } = useQuery({
+    queryKey: ['messages'],
+    queryFn: getMessages
   });
   
   // Mutations
@@ -178,6 +194,36 @@ const Admin = () => {
     onError: () => {
       toast({ 
         title: 'Failed to delete blog post', 
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const markMessageAsReadMutation = useMutation({
+    mutationFn: (id: string) => markMessageAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      toast({ title: 'Message marked as read' });
+    },
+    onError: () => {
+      toast({ 
+        title: 'Failed to mark message as read', 
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: (id: string) => deleteMessage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      toast({ title: 'Message deleted successfully' });
+      setIsDeleteConfirmOpen(false);
+      setIsMessageModalOpen(false);
+    },
+    onError: () => {
+      toast({ 
+        title: 'Failed to delete message', 
         variant: 'destructive'
       });
     }
@@ -280,9 +326,25 @@ const Admin = () => {
       createBlogPostMutation.mutate(blogData as Omit<BlogPost, 'id'>);
     }
   };
+
+  // Handle message operations
+  const handleViewMessage = (message: ContactMessage) => {
+    setSelectedItem(message);
+    setIsMessageModalOpen(true);
+    
+    // Mark as read if it's unread
+    if (!message.read) {
+      markMessageAsReadMutation.mutate(message.id);
+    }
+  };
+
+  const handleCloseMessageModal = () => {
+    setIsMessageModalOpen(false);
+    setSelectedItem(null);
+  };
   
   // Handle opening delete confirmation
-  const handleDeleteConfirm = (id: string, type: 'project' | 'post') => {
+  const handleDeleteConfirm = (id: string, type: 'project' | 'post' | 'message') => {
     setDeleteItemId(id);
     setDeleteItemType(type);
     setIsDeleteConfirmOpen(true);
@@ -294,8 +356,10 @@ const Admin = () => {
     
     if (deleteItemType === 'project') {
       deleteProjectMutation.mutate(deleteItemId);
-    } else {
+    } else if (deleteItemType === 'post') {
       deleteBlogPostMutation.mutate(deleteItemId);
+    } else if (deleteItemType === 'message') {
+      deleteMessageMutation.mutate(deleteItemId);
     }
   };
   
@@ -310,6 +374,9 @@ const Admin = () => {
       setBlogMediaUrl(urls[0]);
     }
   };
+
+  // Count unread messages
+  const unreadMessagesCount = messages?.filter(message => !message.read).length || 0;
   
   return (
     <div className="min-h-screen bg-background">
@@ -358,6 +425,18 @@ const Admin = () => {
               >
                 <FileText size={16} className="mr-2" />
                 Blog Posts
+              </TabsTrigger>
+              <TabsTrigger
+                value="messages"
+                className={`tab-button ${activeTab === 'messages' ? 'active' : ''} relative`}
+              >
+                <MessageSquare size={16} className="mr-2" />
+                Messages
+                {unreadMessagesCount > 0 && (
+                  <Badge variant="default" className="ml-2 bg-neon-blue text-white">
+                    {unreadMessagesCount}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -496,6 +575,52 @@ const Admin = () => {
                 >
                   Add your first blog post
                 </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Messages</h2>
+            </div>
+            
+            {isMessagesLoading ? (
+              <p>Loading messages...</p>
+            ) : isMessagesError ? (
+              <p className="text-destructive">Error loading messages</p>
+            ) : messages && messages.length > 0 ? (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div 
+                    key={message.id} 
+                    className={`glass rounded-xl p-4 transition-all ${!message.read ? 'border-l-4 border-neon-blue' : ''}`}
+                    onClick={() => handleViewMessage(message)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <h3 className="font-bold">{message.name}</h3>
+                        {!message.read && (
+                          <Badge variant="default" className="ml-2 bg-neon-blue text-white">
+                            New
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(message.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{message.email}</p>
+                    <p className="font-medium mb-2">{message.subject}</p>
+                    <p className="text-sm line-clamp-2">{message.message}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No messages found</p>
               </div>
             )}
           </TabsContent>
@@ -651,6 +776,57 @@ const Admin = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Message Modal */}
+      <Dialog open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen}>
+        <DialogContent className="sm:max-w-4xl bg-background">
+          <DialogHeader>
+            <DialogTitle>
+              View Message
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedItem && 'email' in selectedItem && (
+            <div className="grid gap-6 py-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-bold">{selectedItem.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedItem.email}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(selectedItem.date).toLocaleString()}
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium mb-2">Subject</h4>
+                <p>{selectedItem.subject || '(No subject)'}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium mb-2">Message</h4>
+                <div className="bg-white/5 p-4 rounded-md">
+                  <p className="whitespace-pre-wrap">{selectedItem.message}</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-4 mt-4">
+                <Button 
+                  variant="destructive" 
+                  onClick={() => handleDeleteConfirm(selectedItem.id, 'message')}
+                >
+                  <Trash2 size={14} className="mr-2" />
+                  Delete
+                </Button>
+                <Button variant="outline" onClick={handleCloseMessageModal}>
+                  <Check size={14} className="mr-2" />
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
@@ -660,7 +836,10 @@ const Admin = () => {
           </DialogHeader>
           <div className="py-4">
             <p>
-              Are you sure you want to delete this {deleteItemType === 'project' ? 'project' : 'blog post'}? 
+              Are you sure you want to delete this {
+                deleteItemType === 'project' ? 'project' : 
+                deleteItemType === 'post' ? 'blog post' : 'message'
+              }? 
               This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-4 mt-6">

@@ -1,4 +1,4 @@
-import { Project, BlogPost } from "@/models/types";
+import { Project, BlogPost, ContactMessage } from "@/models/types";
 
 // Mock projects data
 export const mockProjects: Project[] = [
@@ -71,6 +71,37 @@ export const mockBlogPosts: BlogPost[] = [
   }
 ];
 
+// Mock contact messages data
+export const mockMessages: ContactMessage[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    subject: 'Project Inquiry',
+    message: 'I would like to discuss a potential web development project for my company. Please contact me when you have a moment.',
+    date: '2023-08-15T10:30:00Z',
+    read: true
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    subject: 'Collaboration Opportunity',
+    message: 'Hello, I found your portfolio impressive and would like to discuss a potential collaboration on an upcoming project.',
+    date: '2023-09-02T14:45:00Z',
+    read: false
+  },
+  {
+    id: '3',
+    name: 'Michael Johnson',
+    email: 'michael@example.com',
+    subject: 'Website Redesign',
+    message: 'Our company is looking to redesign our website and we\'re impressed with your work. Can we schedule a call to discuss details?',
+    date: '2023-09-10T09:15:00Z',
+    read: false
+  }
+];
+
 // Helper function to update mock projects data
 export const updateMockProjects = (updatedProjects: Project[]): void => {
   // Clear the array while keeping the reference
@@ -85,3 +116,9 @@ export const updateMockBlogPosts = (updatedBlogPosts: BlogPost[]): void => {
   mockBlogPosts.push(...updatedBlogPosts);
 };
 
+// Helper function to update mock messages data
+export const updateMockMessages = (updatedMessages: ContactMessage[]): void => {
+  // Clear the array while keeping the reference
+  mockMessages.length = 0;
+  mockMessages.push(...updatedMessages);
+};

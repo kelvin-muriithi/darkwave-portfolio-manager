@@ -1,12 +1,20 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { createMessage } from '@/services/messageService';
 
 const ContactSection = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -27,13 +35,50 @@ const ContactSection = () => {
     };
   }, []);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real implementation, you would send the form data to your backend
-    toast({
-      title: "Message sent!",
-      description: "Thanks for reaching out. I'll get back to you soon.",
-    });
+    
+    if (!name || !email || !message) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Save the message
+      await createMessage({
+        name,
+        email,
+        subject,
+        message,
+        date: new Date().toISOString()
+      });
+      
+      // Reset form
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+      
+      toast({
+        title: "Message sent!",
+        description: "Thanks for reaching out. I'll get back to you soon.",
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Failed to send message",
+        description: "There was an error sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -149,6 +194,9 @@ const ContactSection = () => {
                     id="name" 
                     placeholder="Your name"
                     className="bg-white/5 border-white/10 focus:border-neon-blue"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
                   />
                 </div>
                 
@@ -159,6 +207,9 @@ const ContactSection = () => {
                     type="email" 
                     placeholder="Your email"
                     className="bg-white/5 border-white/10 focus:border-neon-blue"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -169,6 +220,8 @@ const ContactSection = () => {
                   id="subject" 
                   placeholder="What is this regarding?"
                   className="bg-white/5 border-white/10 focus:border-neon-blue"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                 />
               </div>
               
@@ -178,12 +231,15 @@ const ContactSection = () => {
                   id="message" 
                   placeholder="Your message..."
                   className="bg-white/5 border-white/10 focus:border-neon-blue min-h-[150px]"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
                 />
               </div>
               
-              <Button type="submit" className="w-full sm:w-auto">
+              <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
                 <Send className="mr-2 h-4 w-4" />
-                Send Message
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </Button>
             </form>
           </div>

@@ -1,4 +1,3 @@
-
 export interface Project {
   id: string;
   title: string;
@@ -40,4 +39,15 @@ export interface NewsletterSubscription {
   id: string;
   email: string;
   date: string;
+}
+
+// Contact message type
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  date: string;
+  read: boolean;
 }
