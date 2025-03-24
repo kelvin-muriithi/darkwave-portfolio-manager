@@ -32,7 +32,8 @@ export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPo
     };
     
     // Add to mock data
-    mockBlogPosts.push(newPost);
+    const updatedPosts = [...mockBlogPosts, newPost];
+    updateMockBlogPosts(updatedPosts);
     return newPost;
   } catch (error) {
     console.error('Error creating blog post:', error);
@@ -47,8 +48,10 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
     if (index === -1) return null;
     
     // Update post
-    mockBlogPosts[index] = { ...mockBlogPosts[index], ...post };
-    return mockBlogPosts[index];
+    const updatedPosts = [...mockBlogPosts];
+    updatedPosts[index] = { ...updatedPosts[index], ...post };
+    updateMockBlogPosts(updatedPosts);
+    return updatedPosts[index];
   } catch (error) {
     console.error('Error updating blog post:', error);
     return null;

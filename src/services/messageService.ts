@@ -32,8 +32,9 @@ export const createMessage = async (message: Omit<ContactMessage, 'id' | 'read'>
       read: false
     };
     
-    // Add to mock data
-    mockMessages.push(newMessage);
+    // Add to mock data and persist
+    const updatedMessages = [...mockMessages, newMessage];
+    updateMockMessages(updatedMessages);
     return newMessage;
   } catch (error) {
     console.error('Error creating message:', error);
@@ -48,8 +49,13 @@ export const markMessageAsRead = async (id: string): Promise<ContactMessage | nu
     if (index === -1) return null;
     
     // Update message
-    mockMessages[index].read = true;
-    return mockMessages[index];
+    const updatedMessages = [...mockMessages];
+    updatedMessages[index] = {
+      ...updatedMessages[index],
+      read: true
+    };
+    updateMockMessages(updatedMessages);
+    return updatedMessages[index];
   } catch (error) {
     console.error('Error updating message:', error);
     return null;

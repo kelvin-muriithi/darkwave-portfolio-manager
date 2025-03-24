@@ -32,7 +32,8 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
     };
     
     // Add to mock data
-    mockProjects.push(newProject);
+    const updatedProjects = [...mockProjects, newProject];
+    updateMockProjects(updatedProjects);
     return newProject;
   } catch (error) {
     console.error('Error creating project:', error);
@@ -47,8 +48,10 @@ export const updateProject = async (id: string, project: Partial<Project>): Prom
     if (index === -1) return null;
     
     // Update project
-    mockProjects[index] = { ...mockProjects[index], ...project };
-    return mockProjects[index];
+    const updatedProjects = [...mockProjects];
+    updatedProjects[index] = { ...updatedProjects[index], ...project };
+    updateMockProjects(updatedProjects);
+    return updatedProjects[index];
   } catch (error) {
     console.error('Error updating project:', error);
     return null;
