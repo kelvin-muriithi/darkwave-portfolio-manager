@@ -11,9 +11,8 @@ const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Using default unsigned upload 
 // Projects API
 export const getProjects = async (): Promise<Project[]> => {
   try {
-    const response = await fetch(`${API_URL}/projects`);
-    if (!response.ok) throw new Error('Failed to fetch projects');
-    return await response.json();
+    // For now using mock data until backend is connected
+    return getMockProjects();
   } catch (error) {
     console.error('Error fetching projects:', error);
     return [];
@@ -22,9 +21,8 @@ export const getProjects = async (): Promise<Project[]> => {
 
 export const getProjectById = async (id: string): Promise<Project | null> => {
   try {
-    const response = await fetch(`${API_URL}/projects/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch project');
-    return await response.json();
+    // For now using mock data until backend is connected
+    return getMockProjectById(id);
   } catch (error) {
     console.error('Error fetching project:', error);
     return null;
@@ -33,13 +31,15 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
 
 export const createProject = async (project: Omit<Project, 'id'>): Promise<Project | null> => {
   try {
-    const response = await fetch(`${API_URL}/projects`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project)
-    });
-    if (!response.ok) throw new Error('Failed to create project');
-    return await response.json();
+    // Create a new project with a unique ID
+    const newProject: Project = {
+      ...project,
+      id: Date.now().toString()
+    };
+    
+    // Add to mock data
+    mockProjects.push(newProject);
+    return newProject;
   } catch (error) {
     console.error('Error creating project:', error);
     return null;
@@ -48,13 +48,13 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
 
 export const updateProject = async (id: string, project: Partial<Project>): Promise<Project | null> => {
   try {
-    const response = await fetch(`${API_URL}/projects/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project)
-    });
-    if (!response.ok) throw new Error('Failed to update project');
-    return await response.json();
+    // Find project index
+    const index = mockProjects.findIndex(p => p.id === id);
+    if (index === -1) return null;
+    
+    // Update project
+    mockProjects[index] = { ...mockProjects[index], ...project };
+    return mockProjects[index];
   } catch (error) {
     console.error('Error updating project:', error);
     return null;
@@ -63,10 +63,12 @@ export const updateProject = async (id: string, project: Partial<Project>): Prom
 
 export const deleteProject = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_URL}/projects/${id}`, {
-      method: 'DELETE'
-    });
-    return response.ok;
+    // Find project index
+    const initialLength = mockProjects.length;
+    mockProjects = mockProjects.filter(project => project.id !== id);
+    
+    // Return true if a project was removed
+    return mockProjects.length < initialLength;
   } catch (error) {
     console.error('Error deleting project:', error);
     return false;
@@ -76,9 +78,8 @@ export const deleteProject = async (id: string): Promise<boolean> => {
 // Blog Posts API
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
   try {
-    const response = await fetch(`${API_URL}/posts`);
-    if (!response.ok) throw new Error('Failed to fetch blog posts');
-    return await response.json();
+    // For now using mock data until backend is connected
+    return getMockBlogPosts();
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return [];
@@ -87,9 +88,8 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
 
 export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
   try {
-    const response = await fetch(`${API_URL}/posts/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch blog post');
-    return await response.json();
+    // For now using mock data until backend is connected
+    return getMockBlogPostById(id);
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;
@@ -98,13 +98,15 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
 
 export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPost | null> => {
   try {
-    const response = await fetch(`${API_URL}/posts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
-    });
-    if (!response.ok) throw new Error('Failed to create blog post');
-    return await response.json();
+    // Create a new blog post with a unique ID
+    const newPost: BlogPost = {
+      ...post,
+      id: Date.now().toString()
+    };
+    
+    // Add to mock data
+    mockBlogPosts.push(newPost);
+    return newPost;
   } catch (error) {
     console.error('Error creating blog post:', error);
     return null;
@@ -113,13 +115,13 @@ export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPo
 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    const response = await fetch(`${API_URL}/posts/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
-    });
-    if (!response.ok) throw new Error('Failed to update blog post');
-    return await response.json();
+    // Find post index
+    const index = mockBlogPosts.findIndex(p => p.id === id);
+    if (index === -1) return null;
+    
+    // Update post
+    mockBlogPosts[index] = { ...mockBlogPosts[index], ...post };
+    return mockBlogPosts[index];
   } catch (error) {
     console.error('Error updating blog post:', error);
     return null;
@@ -128,10 +130,12 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
 
 export const deleteBlogPost = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_URL}/posts/${id}`, {
-      method: 'DELETE'
-    });
-    return response.ok;
+    // Find post index
+    const initialLength = mockBlogPosts.length;
+    mockBlogPosts = mockBlogPosts.filter(post => post.id !== id);
+    
+    // Return true if a post was removed
+    return mockBlogPosts.length < initialLength;
   } catch (error) {
     console.error('Error deleting blog post:', error);
     return false;
@@ -171,8 +175,8 @@ export const uploadMultipleFiles = async (files: File[]): Promise<string[]> => {
   }
 };
 
-// Mock API functions for initial development (will be replaced by real API calls)
-const mockProjects: Project[] = [
+// Mock data
+let mockProjects: Project[] = [
   {
     id: '1',
     title: 'E-Commerce Web App',
@@ -211,7 +215,7 @@ const mockProjects: Project[] = [
   }
 ];
 
-const mockBlogPosts: BlogPost[] = [
+let mockBlogPosts: BlogPost[] = [
   {
     id: '1',
     title: 'The Future of Web Development',
@@ -243,19 +247,43 @@ const mockBlogPosts: BlogPost[] = [
 
 // Mock API implementations
 export const getMockProjects = (): Promise<Project[]> => {
-  return Promise.resolve(mockProjects);
+  return Promise.resolve([...mockProjects]);
 };
 
 export const getMockProjectById = (id: string): Promise<Project | null> => {
   const project = mockProjects.find(p => p.id === id);
-  return Promise.resolve(project || null);
+  return Promise.resolve(project ? {...project} : null);
 };
 
 export const getMockBlogPosts = (): Promise<BlogPost[]> => {
-  return Promise.resolve(mockBlogPosts);
+  return Promise.resolve([...mockBlogPosts]);
 };
 
 export const getMockBlogPostById = (id: string): Promise<BlogPost | null> => {
   const post = mockBlogPosts.find(p => p.id === id);
-  return Promise.resolve(post || null);
+  return Promise.resolve(post ? {...post} : null);
+};
+
+// Authentication functions
+export const AUTH_TOKEN_KEY = 'portfolio_auth_token';
+
+// Simple authentication check - in a real app, this would validate with a backend
+export const isAuthenticated = (): boolean => {
+  return localStorage.getItem(AUTH_TOKEN_KEY) !== null;
+};
+
+// Login function - in a real app, this would validate credentials with a backend
+export const login = (username: string, password: string): boolean => {
+  // Add your hardcoded credentials here (this is just for demo purposes)
+  // In a real application, this should be handled securely on a backend
+  if (username === "admin" && password === "password123") {
+    localStorage.setItem(AUTH_TOKEN_KEY, 'demo_token');
+    return true;
+  }
+  return false;
+};
+
+// Logout function
+export const logout = (): void => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
 };

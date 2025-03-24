@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMockProjects } from '@/services/api';
+import { getProjects } from '@/services/api';
 import { Project } from '@/models/types';
 import { ExternalLink, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ const WorkSection = () => {
   
   const { data: projects, isLoading, error } = useQuery({
     queryKey: ['projects'],
-    queryFn: getMockProjects
+    queryFn: getProjects
   });
   
   useEffect(() => {
@@ -109,7 +109,7 @@ const ProjectCard = ({
   onClick: () => void;
 }) => (
   <div 
-    className="project-card reveal cursor-pointer"
+    className="project-card reveal cursor-pointer glass rounded-xl overflow-hidden border border-white/10 shadow-lg"
     onClick={onClick}
   >
     <div className="h-64 overflow-hidden">
@@ -140,7 +140,7 @@ const ProjectCard = ({
         )}
       </div>
     </div>
-    <div className="project-card-overlay">
+    <div className="project-card-overlay opacity-0 absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity hover:opacity-100">
       <Button variant="outline" size="sm" className="neon-border">
         <Eye size={16} className="mr-2" />
         View Project

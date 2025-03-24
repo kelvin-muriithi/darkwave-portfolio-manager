@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMockBlogPosts } from '@/services/api';
+import { getBlogPosts } from '@/services/api';
 import { BlogPost } from '@/models/types';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ const BlogSection = () => {
   
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['blogPosts'],
-    queryFn: getMockBlogPosts
+    queryFn: getBlogPosts
   });
   
   useEffect(() => {
@@ -108,7 +108,7 @@ const BlogCard = ({
   onClick: () => void;
 }) => (
   <div 
-    className="blog-card cursor-pointer reveal h-full flex flex-col"
+    className="blog-card cursor-pointer reveal h-full flex flex-col glass rounded-xl overflow-hidden border border-white/10 shadow-lg"
     onClick={onClick}
   >
     <div className="h-48 overflow-hidden">

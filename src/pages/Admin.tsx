@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, FolderOpen, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, FolderOpen, FileText, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,14 +11,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { 
-  getMockProjects, 
-  getMockBlogPosts, 
+  getProjects, 
+  getBlogPosts, 
   createProject, 
   updateProject,
   deleteProject,
   createBlogPost,
   updateBlogPost,
-  deleteBlogPost
+  deleteBlogPost,
+  isAuthenticated,
+  logout
 } from '@/services/api';
 import { Project, BlogPost } from '@/models/types';
 import FileUploader from '@/components/FileUploader';
@@ -49,6 +50,19 @@ const Admin = () => {
   const [blogTags, setBlogTags] = useState('');
   const [blogMediaUrl, setBlogMediaUrl] = useState('');
   
+  // Check authentication
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
   // Fetch projects and blog posts
   const { 
     data: projects,
@@ -56,7 +70,7 @@ const Admin = () => {
     isError: isProjectsError 
   } = useQuery({
     queryKey: ['projects'],
-    queryFn: getMockProjects
+    queryFn: getProjects
   });
   
   const { 
@@ -65,7 +79,7 @@ const Admin = () => {
     isError: isBlogPostsError 
   } = useQuery({
     queryKey: ['blogPosts'],
-    queryFn: getMockBlogPosts
+    queryFn: getBlogPosts
   });
   
   // Mutations
@@ -305,6 +319,15 @@ const Admin = () => {
               </Button>
               <h1 className="text-xl font-bold font-display">Admin Dashboard</h1>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center"
+            >
+              <LogOut size={16} className="mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </header>
@@ -648,3 +671,4 @@ const Admin = () => {
 };
 
 export default Admin;
+
