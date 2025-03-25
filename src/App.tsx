@@ -16,8 +16,16 @@ const queryClient = new QueryClient();
 const App = () => {
   // Initialize the database and storage on app start
   useEffect(() => {
-    initializeDatabase();
-    createStorageBucketIfNotExists();
+    const init = async () => {
+      console.log('Initializing Supabase database and storage...');
+      await createStorageBucketIfNotExists();
+      await initializeDatabase();
+      console.log('Supabase initialization complete');
+    };
+    
+    init().catch(err => {
+      console.error('Failed to initialize Supabase:', err);
+    });
   }, []);
 
   return (
