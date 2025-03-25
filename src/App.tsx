@@ -9,14 +9,15 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { initializeDatabase } from "./services/supabaseClient";
+import { initializeDatabase, createStorageBucketIfNotExists } from "./services/supabaseClient";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize the database on app start
+  // Initialize the database and storage on app start
   useEffect(() => {
     initializeDatabase();
+    createStorageBucketIfNotExists();
   }, []);
 
   return (

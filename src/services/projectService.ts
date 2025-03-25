@@ -11,7 +11,19 @@ export const getProjects = async (): Promise<Project[]> => {
       .order('date', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to match our model
+    const projects: Project[] = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      shortDescription: item.short_description || item.shortDescription,
+      detailedDescription: item.detailed_description || item.detailedDescription,
+      mediaUrls: item.media_urls || item.mediaUrls,
+      date: item.date,
+      tags: item.tags
+    }));
+    
+    return projects || [];
   } catch (error) {
     console.error('Error fetching projects:', error);
     return [];
@@ -27,7 +39,19 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Transform data to match our model
+    const project: Project = {
+      id: data.id,
+      title: data.title,
+      shortDescription: data.short_description || data.shortDescription,
+      detailedDescription: data.detailed_description || data.detailedDescription,
+      mediaUrls: data.media_urls || data.mediaUrls,
+      date: data.date,
+      tags: data.tags
+    };
+    
+    return project;
   } catch (error) {
     console.error('Error fetching project:', error);
     return null;
@@ -37,8 +61,13 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
 export const createProject = async (project: Omit<Project, 'id'>): Promise<Project | null> => {
   try {
     const newProject = {
-      ...project,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      title: project.title,
+      short_description: project.shortDescription,
+      detailed_description: project.detailedDescription,
+      media_urls: project.mediaUrls,
+      date: project.date,
+      tags: project.tags
     };
     
     const { data, error } = await supabase
@@ -48,7 +77,17 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Transform data to match our model
+    return {
+      id: data.id,
+      title: data.title,
+      shortDescription: data.short_description,
+      detailedDescription: data.detailed_description,
+      mediaUrls: data.media_urls,
+      date: data.date,
+      tags: data.tags
+    };
   } catch (error) {
     console.error('Error creating project:', error);
     return null;
@@ -57,15 +96,34 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
 
 export const updateProject = async (id: string, project: Partial<Project>): Promise<Project | null> => {
   try {
+    // Transform the project data to match database schema
+    const projectData: any = {};
+    if (project.title) projectData.title = project.title;
+    if (project.shortDescription) projectData.short_description = project.shortDescription;
+    if (project.detailedDescription) projectData.detailed_description = project.detailedDescription;
+    if (project.mediaUrls) projectData.media_urls = project.mediaUrls;
+    if (project.date) projectData.date = project.date;
+    if (project.tags) projectData.tags = project.tags;
+    
     const { data, error } = await supabase
       .from('projects')
-      .update(project)
+      .update(projectData)
       .eq('id', id)
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Transform data to match our model
+    return {
+      id: data.id,
+      title: data.title,
+      shortDescription: data.short_description,
+      detailedDescription: data.detailed_description,
+      mediaUrls: data.media_urls,
+      date: data.date,
+      tags: data.tags
+    };
   } catch (error) {
     console.error('Error updating project:', error);
     return null;
