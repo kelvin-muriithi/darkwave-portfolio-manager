@@ -1,37 +1,35 @@
 
 import { BlogPost } from "@/models/types";
-import { supabase } from "./supabaseClient";
 
-// Blog Posts API
-export const getBlogPosts = async (): Promise<BlogPost[]> => {
+// Get all blog posts from localStorage
+const getLocalBlogPosts = (): BlogPost[] => {
   try {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .order('date', { ascending: false });
-    
-    if (error) throw error;
-    return data || [];
+    const posts = localStorage.getItem('mock_blog_posts');
+    return posts ? JSON.parse(posts) : [];
   } catch (error) {
-    console.error('Error fetching blog posts:', error);
+    console.error('Error parsing local blog posts:', error);
     return [];
   }
 };
 
-export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
+// Save blog posts to localStorage
+const saveLocalBlogPosts = (posts: BlogPost[]): void => {
   try {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    localStorage.setItem('mock_blog_posts', JSON.stringify(posts));
   } catch (error) {
-    console.error('Error fetching blog post:', error);
-    return null;
+    console.error('Error saving local blog posts:', error);
   }
+};
+
+// Blog Posts API
+export const getBlogPosts = async (): Promise<BlogPost[]> => {
+  console.log('Fetching blog posts from localStorage');
+  return getLocalBlogPosts();
+};
+
+export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
+  const posts = getLocalBlogPosts();
+  return posts.find(post => post.id === id) || null;
 };
 
 export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPost | null> => {
@@ -41,14 +39,11 @@ export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPo
       id: Date.now().toString()
     };
     
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .insert(newPost)
-      .select()
-      .single();
+    const posts = getLocalBlogPosts();
+    const updatedPosts = [newPost, ...posts];
+    saveLocalBlogPosts(updatedPosts);
     
-    if (error) throw error;
-    return data;
+    return newPost;
   } catch (error) {
     console.error('Error creating blog post:', error);
     return null;
@@ -57,15 +52,18 @@ export const createBlogPost = async (post: Omit<BlogPost, 'id'>): Promise<BlogPo
 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .update(post)
-      .eq('id', id)
-      .select()
-      .single();
+    const posts = getLocalBlogPosts();
+    const index = posts.findIndex(p => p.id === id);
     
-    if (error) throw error;
-    return data;
+    if (index === -1) {
+      return null;
+    }
+    
+    const updatedPost = { ...posts[index], ...post };
+    posts[index] = updatedPost;
+    saveLocalBlogPosts(posts);
+    
+    return updatedPost;
   } catch (error) {
     console.error('Error updating blog post:', error);
     return null;
@@ -74,12 +72,10 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
 
 export const deleteBlogPost = async (id: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id);
+    const posts = getLocalBlogPosts();
+    const updatedPosts = posts.filter(post => post.id !== id);
+    saveLocalBlogPosts(updatedPosts);
     
-    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Error deleting blog post:', error);

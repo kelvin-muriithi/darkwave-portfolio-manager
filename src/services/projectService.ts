@@ -1,93 +1,49 @@
 
 import { Project } from "@/models/types";
-import { supabase } from "./supabaseClient";
 
-// Projects API
-export const getProjects = async (): Promise<Project[]> => {
+// Get all projects from localStorage
+const getLocalProjects = (): Project[] => {
   try {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('date', { ascending: false });
-    
-    if (error) throw error;
-    
-    // Transform data to match our model
-    const projects: Project[] = data.map(item => ({
-      id: item.id,
-      title: item.title,
-      shortDescription: item.short_description || item.shortDescription,
-      detailedDescription: item.detailed_description || item.detailedDescription,
-      mediaUrls: item.media_urls || item.mediaUrls,
-      date: item.date,
-      tags: item.tags
-    }));
-    
-    return projects || [];
+    const projects = localStorage.getItem('mock_projects');
+    return projects ? JSON.parse(projects) : [];
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    console.error('Error parsing local projects:', error);
     return [];
   }
 };
 
-export const getProjectById = async (id: string): Promise<Project | null> => {
+// Save projects to localStorage
+const saveLocalProjects = (projects: Project[]): void => {
   try {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    
-    // Transform data to match our model
-    const project: Project = {
-      id: data.id,
-      title: data.title,
-      shortDescription: data.short_description || data.shortDescription,
-      detailedDescription: data.detailed_description || data.detailedDescription,
-      mediaUrls: data.media_urls || data.mediaUrls,
-      date: data.date,
-      tags: data.tags
-    };
-    
-    return project;
+    localStorage.setItem('mock_projects', JSON.stringify(projects));
   } catch (error) {
-    console.error('Error fetching project:', error);
-    return null;
+    console.error('Error saving local projects:', error);
   }
+};
+
+// Projects API
+export const getProjects = async (): Promise<Project[]> => {
+  console.log('Fetching projects from localStorage');
+  return getLocalProjects();
+};
+
+export const getProjectById = async (id: string): Promise<Project | null> => {
+  const projects = getLocalProjects();
+  return projects.find(project => project.id === id) || null;
 };
 
 export const createProject = async (project: Omit<Project, 'id'>): Promise<Project | null> => {
   try {
     const newProject = {
-      id: Date.now().toString(),
-      title: project.title,
-      short_description: project.shortDescription,
-      detailed_description: project.detailedDescription,
-      media_urls: project.mediaUrls,
-      date: project.date,
-      tags: project.tags
+      ...project,
+      id: Date.now().toString()
     };
     
-    const { data, error } = await supabase
-      .from('projects')
-      .insert(newProject)
-      .select()
-      .single();
+    const projects = getLocalProjects();
+    const updatedProjects = [newProject, ...projects];
+    saveLocalProjects(updatedProjects);
     
-    if (error) throw error;
-    
-    // Transform data to match our model
-    return {
-      id: data.id,
-      title: data.title,
-      shortDescription: data.short_description,
-      detailedDescription: data.detailed_description,
-      mediaUrls: data.media_urls,
-      date: data.date,
-      tags: data.tags
-    };
+    return newProject;
   } catch (error) {
     console.error('Error creating project:', error);
     return null;
@@ -96,34 +52,18 @@ export const createProject = async (project: Omit<Project, 'id'>): Promise<Proje
 
 export const updateProject = async (id: string, project: Partial<Project>): Promise<Project | null> => {
   try {
-    // Transform the project data to match database schema
-    const projectData: any = {};
-    if (project.title) projectData.title = project.title;
-    if (project.shortDescription) projectData.short_description = project.shortDescription;
-    if (project.detailedDescription) projectData.detailed_description = project.detailedDescription;
-    if (project.mediaUrls) projectData.media_urls = project.mediaUrls;
-    if (project.date) projectData.date = project.date;
-    if (project.tags) projectData.tags = project.tags;
+    const projects = getLocalProjects();
+    const index = projects.findIndex(p => p.id === id);
     
-    const { data, error } = await supabase
-      .from('projects')
-      .update(projectData)
-      .eq('id', id)
-      .select()
-      .single();
+    if (index === -1) {
+      return null;
+    }
     
-    if (error) throw error;
+    const updatedProject = { ...projects[index], ...project };
+    projects[index] = updatedProject;
+    saveLocalProjects(projects);
     
-    // Transform data to match our model
-    return {
-      id: data.id,
-      title: data.title,
-      shortDescription: data.short_description,
-      detailedDescription: data.detailed_description,
-      mediaUrls: data.media_urls,
-      date: data.date,
-      tags: data.tags
-    };
+    return updatedProject;
   } catch (error) {
     console.error('Error updating project:', error);
     return null;
@@ -132,12 +72,10 @@ export const updateProject = async (id: string, project: Partial<Project>): Prom
 
 export const deleteProject = async (id: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', id);
+    const projects = getLocalProjects();
+    const updatedProjects = projects.filter(project => project.id !== id);
+    saveLocalProjects(updatedProjects);
     
-    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Error deleting project:', error);

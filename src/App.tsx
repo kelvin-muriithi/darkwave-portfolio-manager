@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { initializeDatabase, createStorageBucketIfNotExists } from "./services/supabaseClient";
+import { initializeDatabase } from "./services/supabaseClient";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,26 +24,22 @@ const queryClient = new QueryClient({
 const App = () => {
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize the database and storage on app start
+  // Initialize the localStorage on app start
   useEffect(() => {
     const init = async () => {
       try {
-        console.log('Initializing Supabase database and storage...');
-        // Try to create bucket first
-        await createStorageBucketIfNotExists();
-        // Then initialize database
+        console.log('Initializing local storage...');
         await initializeDatabase();
-        console.log('Supabase initialization complete');
+        console.log('Local storage initialization complete');
         setIsInitialized(true);
       } catch (err) {
-        console.error('Failed to initialize Supabase:', err);
+        console.error('Failed to initialize local storage:', err);
         toast({
-          title: "Database initialization issue",
-          description: "There was a problem connecting to the database. Using local data instead.",
+          title: "Data initialization issue",
+          description: "There was a problem setting up the local storage.",
           variant: "destructive"
         });
         // Even if there's an error, we'll still consider it initialized
-        // so the app can run with mock data
         setIsInitialized(true);
       }
     };
