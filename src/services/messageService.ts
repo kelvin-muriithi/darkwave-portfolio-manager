@@ -1,11 +1,58 @@
 
 import { ContactMessage } from "@/models/types";
-import { supabase } from "./supabaseClient";
+import { supabase, isSupabaseConnected } from "./supabaseClient";
 import { toast } from "@/hooks/use-toast";
+
+// Get all messages from localStorage
+const getLocalMessages = (): ContactMessage[] => {
+  try {
+    const messages = localStorage.getItem('mock_messages');
+    return messages ? JSON.parse(messages) : [];
+  } catch (error) {
+    console.error('Error parsing local messages:', error);
+    return [];
+  }
+};
+
+// Save messages to localStorage
+const saveLocalMessages = (messages: ContactMessage[]): void => {
+  try {
+    localStorage.setItem('mock_messages', JSON.stringify(messages));
+  } catch (error) {
+    console.error('Error saving local messages:', error);
+  }
+};
 
 // Messages API
 export const getMessages = async (): Promise<ContactMessage[]> => {
   try {
+    console.log('Fetching messages...');
+    
+    // If Supabase is not connected, use localStorage
+    if (!isSupabaseConnected()) {
+      console.log('Using localStorage for messages (Supabase not connected)');
+      const localMessages = getLocalMessages();
+      
+      // If no messages in localStorage, create a test one
+      if (!localMessages || localMessages.length === 0) {
+        const testMessage: ContactMessage = {
+          id: 'test-123',
+          name: 'Test User',
+          email: 'test@example.com',
+          subject: 'Test Subject',
+          message: 'This is a test message. To add more messages, use the contact form on your site or click "Refresh Data" in the admin panel.',
+          date: new Date().toISOString(),
+          read: false
+        };
+        
+        saveLocalMessages([testMessage]);
+        return [testMessage];
+      }
+      
+      return localMessages;
+    }
+    
+    // Try to fetch from Supabase if connected
     console.log('Fetching messages from Supabase...');
     const { data, error } = await supabase
       .from('messages')
@@ -14,18 +61,12 @@ export const getMessages = async (): Promise<ContactMessage[]> => {
     
     if (error) {
       console.error('Supabase error fetching messages:', error);
-      // Try to get from localStorage if Supabase fails
-      const localMessages = localStorage.getItem('mock_messages');
-      if (localMessages) {
-        console.log('Using cached messages from localStorage');
-        return JSON.parse(localMessages);
-      }
-      throw error;
+      return getLocalMessages();
     }
     
     if (data && data.length > 0) {
       // Cache the messages in localStorage
-      localStorage.setItem('mock_messages', JSON.stringify(data));
+      saveLocalMessages(data);
       console.log(`Stored ${data.length} messages in localStorage cache`);
     }
     
@@ -33,35 +74,20 @@ export const getMessages = async (): Promise<ContactMessage[]> => {
     return data || [];
   } catch (error) {
     console.error('Error fetching messages:', error);
-    // Try to get from localStorage
-    const localMessages = localStorage.getItem('mock_messages');
-    if (localMessages) {
-      console.log('Using cached messages from localStorage after error');
-      return JSON.parse(localMessages);
-    }
-    
-    // If no cached data exists, create and return a test message
-    const testMessage: ContactMessage = {
-      id: 'test-123',
-      name: 'Test User',
-      email: 'test@example.com',
-      subject: 'Test Subject',
-      message: 'This is a test message to confirm the frontend display is working.',
-      date: new Date().toISOString(),
-      read: false
-    };
-    
-    // Store the test message in localStorage
-    localStorage.setItem('mock_messages', JSON.stringify([testMessage]));
-    console.log('Created test message for display testing');
-    
-    return [testMessage];
+    return getLocalMessages();
   }
 };
 
 export const getMessageById = async (id: string): Promise<ContactMessage | null> => {
   try {
     console.log(`Fetching message with ID: ${id}`);
+    
+    // If Supabase is not connected, use localStorage
+    if (!isSupabaseConnected()) {
+      const messages = getLocalMessages();
+      return messages.find(msg => msg.id === id) || null;
+    }
+    
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -71,18 +97,15 @@ export const getMessageById = async (id: string): Promise<ContactMessage | null>
     if (error) {
       console.warn('Supabase error fetching message by ID:', error);
       // Try to get from localStorage
-      const localMessages = localStorage.getItem('mock_messages');
-      if (localMessages) {
-        const messages = JSON.parse(localMessages);
-        const message = messages.find((msg: ContactMessage) => msg.id === id);
-        if (message) return message;
-      }
-      throw error;
+      const messages = getLocalMessages();
+      return messages.find(msg => msg.id === id) || null;
     }
+    
     return data;
   } catch (error) {
     console.error('Error fetching message:', error);
-    return null;
+    const messages = getLocalMessages();
+    return messages.find(msg => msg.id === id) || null;
   }
 };
 
@@ -96,6 +119,20 @@ export const createMessage = async (message: Omit<ContactMessage, 'id' | 'read'>
       read: false
     };
     
+    // If Supabase is not connected, use localStorage
+    if (!isSupabaseConnected()) {
+      const messages = getLocalMessages();
+      const updatedMessages = [newMessage, ...messages];
+      saveLocalMessages(updatedMessages);
+      
+      toast({
+        title: "Message saved locally",
+        description: "Your message was saved to local storage"
+      });
+      
+      return newMessage;
+    }
+    
     // First, try to insert into Supabase
     const { data, error } = await supabase
       .from('messages')
@@ -106,10 +143,9 @@ export const createMessage = async (message: Omit<ContactMessage, 'id' | 'read'>
     if (error) {
       console.warn('Supabase error creating message, using local storage instead:', error);
       // Fall back to localStorage
-      const existingMessages = localStorage.getItem('mock_messages');
-      let messages = existingMessages ? JSON.parse(existingMessages) : [];
-      messages = [newMessage, ...messages];
-      localStorage.setItem('mock_messages', JSON.stringify(messages));
+      const messages = getLocalMessages();
+      const updatedMessages = [newMessage, ...messages];
+      saveLocalMessages(updatedMessages);
       
       toast({
         title: "Message saved locally",
@@ -120,6 +156,12 @@ export const createMessage = async (message: Omit<ContactMessage, 'id' | 'read'>
     }
     
     console.log('Message created successfully in Supabase');
+    
+    // Also update localStorage cache
+    const messages = getLocalMessages();
+    const updatedMessages = [data, ...messages];
+    saveLocalMessages(updatedMessages);
+    
     toast({
       title: "Message sent successfully",
       description: "Your message has been saved to the database"
@@ -141,6 +183,16 @@ export const markMessageAsRead = async (id: string): Promise<ContactMessage | nu
   try {
     console.log(`Marking message ${id} as read`);
     
+    // If Supabase is not connected, use localStorage
+    if (!isSupabaseConnected()) {
+      const messages = getLocalMessages();
+      const updatedMessages = messages.map(msg => 
+        msg.id === id ? { ...msg, read: true } : msg
+      );
+      saveLocalMessages(updatedMessages);
+      return updatedMessages.find(msg => msg.id === id) || null;
+    }
+    
     // First try with Supabase
     const { data, error } = await supabase
       .from('messages')
@@ -152,17 +204,20 @@ export const markMessageAsRead = async (id: string): Promise<ContactMessage | nu
     if (error) {
       console.warn('Supabase error updating message, using localStorage instead:', error);
       // Fall back to localStorage
-      const existingMessages = localStorage.getItem('mock_messages');
-      if (existingMessages) {
-        let messages = JSON.parse(existingMessages);
-        messages = messages.map((msg: ContactMessage) => 
-          msg.id === id ? { ...msg, read: true } : msg
-        );
-        localStorage.setItem('mock_messages', JSON.stringify(messages));
-        return messages.find((msg: ContactMessage) => msg.id === id) || null;
-      }
-      return null;
+      const messages = getLocalMessages();
+      const updatedMessages = messages.map(msg => 
+        msg.id === id ? { ...msg, read: true } : msg
+      );
+      saveLocalMessages(updatedMessages);
+      return updatedMessages.find(msg => msg.id === id) || null;
     }
+    
+    // Also update localStorage cache
+    const messages = getLocalMessages();
+    const updatedMessages = messages.map(msg => 
+      msg.id === id ? { ...msg, read: true } : msg
+    );
+    saveLocalMessages(updatedMessages);
     
     return data;
   } catch (error) {
@@ -175,6 +230,14 @@ export const deleteMessage = async (id: string): Promise<boolean> => {
   try {
     console.log(`Deleting message ${id}`);
     
+    // If Supabase is not connected, use localStorage
+    if (!isSupabaseConnected()) {
+      const messages = getLocalMessages();
+      const updatedMessages = messages.filter(msg => msg.id !== id);
+      saveLocalMessages(updatedMessages);
+      return true;
+    }
+    
     // Try with Supabase first
     const { error } = await supabase
       .from('messages')
@@ -184,13 +247,15 @@ export const deleteMessage = async (id: string): Promise<boolean> => {
     if (error) {
       console.warn('Supabase error deleting message, using localStorage instead:', error);
       // Fall back to localStorage
-      const existingMessages = localStorage.getItem('mock_messages');
-      if (existingMessages) {
-        let messages = JSON.parse(existingMessages);
-        messages = messages.filter((msg: ContactMessage) => msg.id !== id);
-        localStorage.setItem('mock_messages', JSON.stringify(messages));
-      }
+      const messages = getLocalMessages();
+      const updatedMessages = messages.filter(msg => msg.id !== id);
+      saveLocalMessages(updatedMessages);
     }
+    
+    // Also update localStorage cache
+    const messages = getLocalMessages();
+    const updatedMessages = messages.filter(msg => msg.id !== id);
+    saveLocalMessages(updatedMessages);
     
     return true;
   } catch (error) {

@@ -25,9 +25,34 @@ const AdminHeader = ({ handleLogout }: AdminHeaderProps) => {
     queryClient.invalidateQueries({ queryKey: ['blogPosts'] });
     queryClient.invalidateQueries({ queryKey: ['projects'] });
     
+    // Add some sample data if needed (for testing)
+    const generateSampleData = () => {
+      // Sample message if none exist
+      const sampleMessage = {
+        id: `sample-${Date.now()}`,
+        name: 'Sample User',
+        email: 'sample@example.com',
+        subject: 'Test Message',
+        message: 'This is a sample message to test the system.',
+        date: new Date().toISOString(),
+        read: false
+      };
+      
+      // Get existing messages or create new array
+      const existingMessages = JSON.parse(localStorage.getItem('mock_messages') || '[]');
+      
+      // Only add sample if no messages exist
+      if (existingMessages.length === 0) {
+        localStorage.setItem('mock_messages', JSON.stringify([sampleMessage]));
+      }
+    };
+    
+    // Generate sample data
+    generateSampleData();
+    
     toast({ 
       title: "Data refreshed",
-      description: "All data has been refreshed from the database"
+      description: "All data has been refreshed and sample data added if needed"
     });
   };
 

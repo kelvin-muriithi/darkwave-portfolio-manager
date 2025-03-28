@@ -9,16 +9,54 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Initialize Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Check and initialize database tables if they don't exist
+// Check if Supabase is available and set flag
+let isSupabaseAvailable = false;
+
+export const checkSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('messages').select('count').limit(1);
+    isSupabaseAvailable = !error;
+    console.log('Supabase connection check:', isSupabaseAvailable ? 'Connected' : 'Not connected');
+    return isSupabaseAvailable;
+  } catch (error) {
+    console.error('Supabase connection error:', error);
+    isSupabaseAvailable = false;
+    return false;
+  }
+};
+
+// Expose connection status check
+export const isSupabaseConnected = () => isSupabaseAvailable;
+
+// Initialize database with mock data if needed
 export const initializeDatabase = async () => {
   try {
     console.log('Initializing database with sample data...');
     
-    // Instead of trying to create tables with RPC functions that don't exist,
-    // we'll check if we can insert data directly - if tables don't exist,
-    // we'll just use the mock data
+    // Check connection first
+    await checkSupabaseConnection();
     
-    // Try to query projects table
+    if (!isSupabaseAvailable) {
+      console.log('Supabase not available, will use localStorage for data storage');
+      
+      // Initialize localStorage with empty arrays if they don't exist
+      if (!localStorage.getItem('mock_messages')) {
+        localStorage.setItem('mock_messages', JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem('mock_projects')) {
+        localStorage.setItem('mock_projects', JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem('mock_blog_posts')) {
+        localStorage.setItem('mock_blog_posts', JSON.stringify([]));
+      }
+      
+      console.log('LocalStorage initialized for data storage');
+      return;
+    }
+    
+    // If Supabase is available, check tables
     const { data: projectsCheck, error: projectsError } = await supabase
       .from('projects')
       .select('*')
@@ -57,13 +95,18 @@ export const initializeDatabase = async () => {
   }
 };
 
-// Storage bucket operations
+// Storage bucket operations - only attempt if Supabase is connected
 export const createStorageBucketIfNotExists = async () => {
   try {
     console.log('Checking Supabase storage bucket...');
     
-    // Check if we can list buckets - if we can't, we'll skip bucket creation
-    // (likely due to permissions issues)
+    // Check connection first
+    if (!await checkSupabaseConnection()) {
+      console.log('Supabase not available, skipping bucket creation');
+      return;
+    }
+    
+    // Check if we can list buckets
     const { data: buckets, error: listError } = await supabase.storage.listBuckets();
     
     if (listError) {
@@ -101,8 +144,14 @@ export const createStorageBucketIfNotExists = async () => {
   }
 };
 
-// File upload function
+// File upload function with fallback
 export const uploadFileToStorage = async (file: File): Promise<string | null> => {
+  // Check Supabase connection first
+  if (!await checkSupabaseConnection()) {
+    console.log('Supabase not available, using fallback upload');
+    return fallbackUploadFile(file);
+  }
+  
   try {
     const bucketName = 'media';
     const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
@@ -117,7 +166,7 @@ export const uploadFileToStorage = async (file: File): Promise<string | null> =>
     
     if (error) {
       console.error('Supabase upload error:', error);
-      throw error;
+      return fallbackUploadFile(file);
     }
     
     // Get public URL
@@ -129,7 +178,7 @@ export const uploadFileToStorage = async (file: File): Promise<string | null> =>
     return publicUrl;
   } catch (error) {
     console.error('Error uploading file to Supabase Storage:', error);
-    return null;
+    return fallbackUploadFile(file);
   }
 };
 
@@ -147,3 +196,6 @@ export const fallbackUploadFile = (file: File): string => {
   }
   return 'https://via.placeholder.com/300';
 };
+
+// Initialize database when this module loads
+checkSupabaseConnection();
