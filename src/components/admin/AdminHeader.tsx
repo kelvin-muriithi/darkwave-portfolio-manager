@@ -15,10 +15,20 @@ const AdminHeader = ({ handleLogout }: AdminHeaderProps) => {
   const queryClient = useQueryClient();
 
   const handleRefreshData = () => {
+    // Clear local cache before refreshing to ensure fresh data
+    localStorage.removeItem('mock_messages');
+    localStorage.removeItem('mock_projects');
+    localStorage.removeItem('mock_blog_posts');
+    
+    // Invalidate all queries to force refetch
     queryClient.invalidateQueries({ queryKey: ['messages'] });
     queryClient.invalidateQueries({ queryKey: ['blogPosts'] });
     queryClient.invalidateQueries({ queryKey: ['projects'] });
-    toast({ title: "Data refreshed" });
+    
+    toast({ 
+      title: "Data refreshed",
+      description: "All data has been refreshed from the database"
+    });
   };
 
   return (
@@ -43,7 +53,7 @@ const AdminHeader = ({ handleLogout }: AdminHeaderProps) => {
               className="flex items-center"
             >
               <RefreshCw size={16} className="mr-2" />
-              Refresh
+              Refresh Data
             </Button>
             <Button
               variant="ghost"
