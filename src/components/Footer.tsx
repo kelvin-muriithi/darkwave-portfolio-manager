@@ -16,7 +16,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">
-            <h3 className="text-xl font-bold neon-text-blue font-display">Portfolio</h3>
+            <h3 className="text-xl font-bold neon-text-blue font-display">Kelvin Muriithi</h3>
             <p className="text-muted-foreground max-w-xs">
               Showcasing my creative work and thoughts through a curated collection of projects and insights.
             </p>
@@ -74,7 +74,7 @@ const Footer = () => {
         
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Portfolio. All rights reserved.
+            © {new Date().getFullYear()} Kelvin Muriithi. All rights reserved.
           </p>
           
           <button
