@@ -129,21 +129,21 @@ const FileUploader = ({
         const allUrls = [...existingUrls, ...uploadedUrls];
         onFileUpload(allUrls);
         toast({
-          title: 'Files uploaded successfully to Supabase Storage',
+          title: 'Files uploaded successfully',
           description: `${uploadedUrls.length} file(s) uploaded.`,
         });
       } else {
         toast({
           title: 'Upload failed',
-          description: 'Failed to upload one or more files to Supabase Storage.',
+          description: 'Failed to upload one or more files.',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('Error uploading files to Supabase Storage:', error);
+      console.error('Error uploading files:', error);
       toast({
-        title: 'Supabase Storage upload error',
-        description: 'An error occurred while uploading files to Supabase Storage.',
+        title: 'Upload error',
+        description: 'An error occurred while uploading files.',
         variant: 'destructive',
       });
     } finally {
@@ -199,7 +199,7 @@ const FileUploader = ({
       {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Uploading to Supabase Storage...</span>
+            <span className="text-sm text-muted-foreground">Uploading...</span>
             <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
           </div>
           <Progress value={uploadProgress} className="h-2" />
@@ -256,10 +256,10 @@ const FileUploader = ({
           {isUploading ? (
             <span className="flex items-center">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading to Supabase Storage...
+              Uploading...
             </span>
           ) : (
-            `Upload ${files.length} file${files.length > 1 ? 's' : ''} to Supabase Storage`
+            `Upload ${files.length} file${files.length > 1 ? 's' : ''}`
           )}
         </Button>
       )}
